@@ -69,13 +69,7 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
             }
         }
         if (Build.VERSION.SDK_INT >= 29) {
-            val bundle: Bundle? = intent.extras
-            bundle?.let {
-                bundle.apply {
-                    //Intent with data
-                    pasteText = getString("pasteText")
-                }
-            }
+            pasteText = "GET_CLIPBOARD_DATA"
         } else {
             clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager?
             val clip = clipboard?.primaryClip
