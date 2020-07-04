@@ -10,20 +10,34 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.zxing.Result
 import me.dm7.barcodescanner.zxing.ZXingScannerView
-import android.content.ClipboardManager
 import com.yourcompany.barcodescan.R
 import android.view.LayoutInflater
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.Button
 import android.view.View
-import android.content.ClipData
+
+import java.io.File
+import java.io.FileInputStream
+import java.util.*
+import kotlin.collections.ArrayList
+import android.R.attr.data
+import android.graphics.BitmapFactory
+import android.graphics.BitmapFactory.Options
+import android.graphics.Bitmap
+import android.database.Cursor
+import android.provider.MediaStore
+import android.net.Uri
+import com.google.zxing.*
+import com.google.zxing.common.HybridBinarizer
+import android.R.attr.data
+import com.google.android.material.snackbar.Snackbar
+import android.widget.Toast
 
 class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
 
     lateinit var scannerView: me.dm7.barcodescanner.zxing.ZXingScannerView
-    private var clipboard: ClipboardManager? = null
-    private var pasteText: String? = null
+    private val SELECT_PHOTO = 12345
 
     companion object {
         val REQUEST_TAKE_PHOTO_CAMERA_PERMISSION = 100
@@ -56,35 +70,57 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
             }
             this.invalidateOptionsMenu()
         }
-        var pasteBtn = findViewById<Button>(R.id.PASTE)
-        val bundle: Bundle? = intent.extras
-        bundle?.let {
-            bundle.apply {
-                //Intent with data
-                val pasteButtonText: String? = getString("pasteButtonText")
-                if (pasteButtonText != null) {
-                    pasteBtn.text = pasteButtonText
-                }
+        var selectImageBtn = findViewById<Button>(R.id.SELECT_IMAGE)
+        val intent = Intent()
+        selectImageBtn.setOnClickListener {
+            val photoPickerIntent = Intent(Intent.ACTION_PICK)
+            photoPickerIntent.setType("image/*")
+            startActivityForResult(photoPickerIntent, SELECT_PHOTO)
+        }
+    }
 
+    override protected fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == SELECT_PHOTO && resultCode == RESULT_OK && data != null) {
+            // Let's read picked image data - its URI
+            val pickedImage: Uri = data.getData()
+            // Let's read picked image path using content resolver
+            val filePath = arrayOf<String>(MediaStore.Images.Media.DATA)
+            val cursor: Cursor = getContentResolver().query(pickedImage, filePath, null, null, null)
+            cursor.moveToFirst()
+            val imagePath: String = cursor.getString(cursor.getColumnIndex(filePath[0]))
+
+            val options = Options()
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888
+            val bitmap: Bitmap = BitmapFactory.decodeFile(imagePath, options)
+
+            val w = bitmap.width
+            val h = bitmap.height
+            val pixels = IntArray(w * h)
+            bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+            val source = RGBLuminanceSource(bitmap.width, bitmap.height, pixels)
+            val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
+
+            val hints = Hashtable<DecodeHintType, Any>()
+            val decodeFormats = ArrayList<BarcodeFormat>()
+            decodeFormats.add(BarcodeFormat.QR_CODE)
+            hints[DecodeHintType.POSSIBLE_FORMATS] = decodeFormats
+            hints[DecodeHintType.CHARACTER_SET] = "utf-8"
+            hints[DecodeHintType.TRY_HARDER] = true
+
+            try {
+                val intent = Intent()
+                val decodeResult = MultiFormatReader().decode(binaryBitmap, hints)
+                intent.putExtra("SCAN_RESULT", decodeResult.text)
+                setResult(Activity.RESULT_OK, intent)
+                finish()
+            } catch (e: NotFoundException) {
+                val intent = Intent()
+                intent.putExtra("SCAN_RESULT", "")
+                setResult(Activity.RESULT_OK, intent)
+                finish()
             }
         }
-        if (Build.VERSION.SDK_INT >= 29) {
-            pasteText = "GET_CLIPBOARD_DATA"
-        } else {
-            clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager?
-            val clip = clipboard?.primaryClip
-            pasteText = clip?.getItemAt(0)?.text.toString()
-        }
-        val intent = Intent()
-        pasteBtn.setOnClickListener {
-            intent.putExtra("SCAN_RESULT", pasteText)
-            setResult(Activity.RESULT_OK, intent)
-            finish()
-        }
-        if (pasteText == null) {
-            pasteBtn.setVisibility(View.INVISIBLE)
-        }
-
     }
 
     override fun onResume() {
@@ -93,16 +129,6 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
         // start camera immediately if permission is already given
         if (!requestCameraAccessIfNecessary()) {
             scannerView.startCamera()
-        }
-        if (Build.VERSION.SDK_INT < 29) {
-            // show Paste Invoice button if there's a valid item in clipboard
-            clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager?
-            val clip = clipboard?.primaryClip
-            pasteText = clip?.getItemAt(0)?.text.toString()
-            if (pasteText != null) {
-                var pasteBtn = findViewById<Button>(R.id.PASTE)
-                pasteBtn.setVisibility(View.VISIBLE)
-            }
         }
     }
 
