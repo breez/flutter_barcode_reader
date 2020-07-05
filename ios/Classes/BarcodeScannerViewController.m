@@ -55,7 +55,6 @@
     
   [_scanRect startAnimating];
     self.scanner = [[MTBBarcodeScanner alloc] initWithPreviewView:_previewView];
-    //self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Paste" style:UIBarButtonItemStylePlain target:self action:@selector(paste)];
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Select Image" style:UIBarButtonItemStylePlain target:self action:@selector(selectAndDecodeQRImage)];
   [self updateFlashButton];
 }
@@ -100,13 +99,6 @@
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
-/*
-- (void)paste {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    [self.delegate barcodeScannerViewController:self didScanBarcodeWithResult:pasteboard.string];
-    [self dismissViewControllerAnimated:NO completion:nil];
-}
-*/
 - (void)selectAndDecodeQRImage {
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.delegate = self;
