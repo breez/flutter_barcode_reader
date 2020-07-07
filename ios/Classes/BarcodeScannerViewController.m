@@ -55,7 +55,7 @@
     
   [_scanRect startAnimating];
     self.scanner = [[MTBBarcodeScanner alloc] initWithPreviewView:_previewView];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Paste" style:UIBarButtonItemStylePlain target:self action:@selector(paste)];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Select Image" style:UIBarButtonItemStylePlain target:self action:@selector(selectAndDecodeQRImage)];
   [self updateFlashButton];
 }
 
@@ -99,10 +99,30 @@
     [self dismissViewControllerAnimated:true completion:nil];
 }
 
-- (void)paste {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    [self.delegate barcodeScannerViewController:self didScanBarcodeWithResult:pasteboard.string];
-    [self dismissViewControllerAnimated:NO completion:nil];
+- (void)selectAndDecodeQRImage {
+    UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+    picker.delegate = self;
+    [self presentViewController:picker animated:true completion:nil];
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+[picker dismissViewControllerAnimated:NO completion:nil];
+    UIImage *chosenImage = info[UIImagePickerControllerOriginalImage];
+    CIDetector *detector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:nil options:@{ CIDetectorAccuracy : CIDetectorAccuracyHigh }];
+
+    NSArray *features = [detector featuresInImage:[CIImage imageWithCGImage:chosenImage.CGImage]];
+    if (features.count > 0) {
+        CIQRCodeFeature *feature = [features objectAtIndex:0];
+        NSString *qrData = feature.messageString;
+        [self.delegate barcodeScannerViewController:self didScanBarcodeWithResult:qrData];
+    } else {
+        [self.delegate barcodeScannerViewController:self didScanBarcodeWithResult:@""];
+    }
+    [self dismissViewControllerAnimated:true completion:nil];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)updateFlashButton {
