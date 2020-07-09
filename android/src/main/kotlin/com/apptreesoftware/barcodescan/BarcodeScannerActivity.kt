@@ -77,7 +77,7 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
                 photoPickerIntent.setType("image/*")
                 startActivityForResult(photoPickerIntent, SELECT_PHOTO)
             } else {
-                requestPermissionsCompat(necessaryPermissions, GALLERY_REQUEST_CODE)
+                requestPermissionsCompat(necessaryPermissions, SELECT_PHOTO)
             }
         }
     }
