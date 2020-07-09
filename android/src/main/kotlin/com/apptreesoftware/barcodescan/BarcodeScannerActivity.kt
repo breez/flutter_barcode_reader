@@ -31,8 +31,6 @@ import android.net.Uri
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import android.R.attr.data
-import com.google.android.material.snackbar.Snackbar
-import android.widget.Toast
 
 class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
 
@@ -73,10 +71,26 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
         var selectImageBtn = findViewById<Button>(R.id.SELECT_IMAGE)
         val intent = Intent()
         selectImageBtn.setOnClickListener {
-            val photoPickerIntent = Intent(Intent.ACTION_PICK)
-            photoPickerIntent.setType("image/*")
-            startActivityForResult(photoPickerIntent, SELECT_PHOTO)
+            val necessaryPermissions = arrayOf<String>(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (arePermissionsGranted(necessaryPermissions)) {
+                val photoPickerIntent = Intent(Intent.ACTION_PICK)
+                photoPickerIntent.setType("image/*")
+                startActivityForResult(photoPickerIntent, SELECT_PHOTO)
+            } else {
+                requestPermissionsCompat(necessaryPermissions, GALLERY_REQUEST_CODE)
+            }
         }
+    }
+
+    private fun arePermissionsGranted(permissions: Array<String>): Boolean {
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) !== PackageManager.PERMISSION_GRANTED) return false
+        }
+        return true
+    }
+
+    private fun requestPermissionsCompat(permissions: Array<String>, requestCode: Int) {
+        ActivityCompat.requestPermissions(this, permissions, requestCode)
     }
 
     override protected fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
