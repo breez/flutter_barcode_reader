@@ -47,7 +47,7 @@
     [self.cancelButton.layer setBorderWidth:1.0f];
     [self.cancelButton.layer setCornerRadius:10.0f];
     [self.cancelButton.layer setBorderColor:self.view.tintColor.CGColor];
-    self.cancelButton.frame = CGRectMake((viewSize.width - 160) / 2, viewSize.height - 70, 160, 40);    
+    self.cancelButton.frame = CGRectMake((viewSize.width - 160) / 2, viewSize.height - 70, 160, 70);
     [self.cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];    
     [self.cancelButton setUserInteractionEnabled:true];
     [self.cancelButton addTarget:self action:@selector(cancel) forControlEvents:UIControlEventTouchUpInside];
