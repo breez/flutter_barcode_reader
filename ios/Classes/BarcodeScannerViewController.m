@@ -47,11 +47,16 @@
     [self.cancelButton.layer setBorderWidth:1.0f];
     [self.cancelButton.layer setCornerRadius:10.0f];
     [self.cancelButton.layer setBorderColor:self.view.tintColor.CGColor];
-    self.cancelButton.frame = CGRectMake((viewSize.width - 160) / 2, viewSize.height - 70, 160, 70);
+
+    self.cancelButton.translatesAutoresizingMaskIntoConstraints = false;
+    [self.view addSubview:self.cancelButton];
+    [self.cancelButton.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-70].active = YES;
+    [self.cancelButton.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor].active = YES;
+    [self.cancelButton.widthAnchor constraintEqualToConstant:100].active = YES;
+
     [self.cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];    
     [self.cancelButton setUserInteractionEnabled:true];
     [self.cancelButton addTarget:self action:@selector(cancel) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:self.cancelButton];
     
   [_scanRect startAnimating];
     self.scanner = [[MTBBarcodeScanner alloc] initWithPreviewView:_previewView];
